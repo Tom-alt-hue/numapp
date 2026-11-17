@@ -26,9 +26,9 @@ jobs:
           echo "EADK = $EADK"
           CF="-std=c99 $EADK -Os -Wall -fno-tree-loop-distribute-patterns -fdata-sections -ffunction-sections -flto -fno-fat-lto-objects -fwhole-program -fvisibility=internal"
           LF="-Wl,--relocatable -nostartfiles --specs=nano.specs -Wl,-e,main -Wl,-u,eadk_app_name -Wl,-u,eadk_app_icon -Wl,-u,eadk_api_level -Wl,--gc-sections -flinker-output=nolto-rel"
-          arm-none-eabi-gcc $CF -c src/main.c -o output/main.o
+          eval "arm-none-eabi-gcc $CF -c src/main.c -o output/main.o"
           npx --yes -- nwlink@0.0.19 png-icon-o src/icon.png output/icon.o
-          arm-none-eabi-gcc $CF $LF output/main.o output/icon.o -o output/app.nwa
+          eval "arm-none-eabi-gcc $CF $LF output/main.o output/icon.o -o output/app.nwa"
           cp output/app.nwa output/NumApp.nwa
           ls -l output
 
