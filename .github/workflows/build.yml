@@ -1,0 +1,38 @@
+name: Build NumApp
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installer le compilateur ARM
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Compiler
+        run: |
+          mkdir -p output
+          EADK="$(npx --yes -- nwlink@0.0.19 eadk-cflags-device || npx --yes -- nwlink@0.0.19 eadk-cflags)"
+          echo "EADK = $EADK"
+          CF="-std=c99 $EADK -Os -Wall -fno-tree-loop-distribute-patterns -fdata-sections -ffunction-sections -flto -fno-fat-lto-objects -fwhole-program -fvisibility=internal"
+          LF="-Wl,--relocatable -nostartfiles --specs=nano.specs -Wl,-e,main -Wl,-u,eadk_app_name -Wl,-u,eadk_app_icon -Wl,-u,eadk_api_level -Wl,--gc-sections -flinker-output=nolto-rel"
+          arm-none-eabi-gcc $CF -c src/main.c -o output/main.o
+          npx --yes -- nwlink@0.0.19 png-icon-o src/icon.png output/icon.o
+          arm-none-eabi-gcc $CF $LF output/main.o output/icon.o -o output/app.nwa
+          cp output/app.nwa output/NumApp.nwa
+          ls -l output
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NumApp
+          path: output/NumApp.nwa
